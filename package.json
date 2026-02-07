@@ -4,14 +4,24 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev" : "node --watch src/index.js",
-    "start" : "node src/index.js"
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
+    "demo": "node src/crud-demo.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@neondatabase/serverless": "^1.0.2",
+    "dotenv": "^17.2.4",
+    "drizzle-orm": "^0.45.1",
     "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.31.8"
   }
 }
