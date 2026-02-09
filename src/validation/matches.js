@@ -18,6 +18,9 @@ const isoDateString = z.string().refine((val) => !isNaN(Date.parse(val)), {
     message: 'Invalid ISO date string',
 });
 
+// alternative of isodtaestring is 
+// const isoDateString = z.iso.datetime();
+
 export const createMatchSchema = z.object({
     sport : z.string().min(1),
     homeTeam : z.string().min(1),
