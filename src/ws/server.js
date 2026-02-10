@@ -1,4 +1,5 @@
 import {WebSocket, WebSocketServer} from 'ws';
+import {wsArcjet} from "../arcjet.js";
 
 function sendJson(socket, payload){
     if(socket.readyState !== WebSocket.OPEN) return;
@@ -12,14 +13,37 @@ function broadcast(wss, payload){
     }
 }
 
+const WS_PATH = '/ws';
+
 export function attachWebSocketServer(server){
     const wss = new WebSocketServer({
-        server, 
-        path : '/ws',
+        noServer : true,
         maxPayload : 1024 * 1024,
     });
 
-    wss.on('connection', (socket) => {
+    server.on('upgrade', async (req, socket, head) => {
+        if (req.url?.split('?')[0] !== WS_PATH) return;
+
+        if (wsArcjet) {
+            try {
+                const decision = await wsArcjet.protect(req);
+                if (decision.isDenied()) {
+                    socket.destroy();
+                    return;
+                }
+            } catch (e) {
+                console.error('WS connection error', e);
+                socket.destroy();
+                return;
+            }
+        }
+
+        wss.handleUpgrade(req, socket, head, (ws) => {
+            wss.emit('connection', ws, req);
+        });
+    });
+
+    wss.on('connection', (socket, req) => {
         socket.isAlive = true;
         socket.on('pong', () => {socket.isAlive = true});
 
