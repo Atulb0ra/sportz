@@ -13,33 +13,37 @@ function broadcast(wss, payload){
     }
 }
 
+const WS_PATH = '/ws';
+
 export function attachWebSocketServer(server){
     const wss = new WebSocketServer({
-        server, 
-        path : '/ws',
+        noServer : true,
         maxPayload : 1024 * 1024,
     });
-    
-    wss.on('connection', async (socket, req) => {
 
-        if(wsArcjet){
-            try{
+    server.on('upgrade', async (req, socket, head) => {
+        if (req.url?.split('?')[0] !== WS_PATH) return;
+
+        if (wsArcjet) {
+            try {
                 const decision = await wsArcjet.protect(req);
-
-                if(decision.isDenied()){
-                    const code = decision.reason.isRateLimit() ? 1013 : 1008;
-                    const reason = decision.reason.isRateLimit() ? 'Rate limit exceeded' : 'Access denied';
-
-                    socket.close(code, reason);
+                if (decision.isDenied()) {
+                    socket.destroy();
                     return;
                 }
-            }catch(e){
+            } catch (e) {
                 console.error('WS connection error', e);
-                socket.close(1011, 'Server security error');
+                socket.destroy();
                 return;
             }
         }
 
+        wss.handleUpgrade(req, socket, head, (ws) => {
+            wss.emit('connection', ws, req);
+        });
+    });
+
+    wss.on('connection', (socket, req) => {
         socket.isAlive = true;
         socket.on('pong', () => {socket.isAlive = true});
 
